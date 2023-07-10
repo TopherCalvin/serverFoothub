@@ -4,9 +4,10 @@ module.exports = (sequelize, Sequelize) => {
     {
       title: Sequelize.STRING,
       address: Sequelize.STRING,
-      province: Sequelize.STRING,
-      city: Sequelize.STRING,
+      road: Sequelize.STRING,
       district: Sequelize.STRING,
+      city: Sequelize.STRING,
+      province: Sequelize.STRING,
       postcode: Sequelize.INTEGER,
       latitude: Sequelize.STRING,
       longitude: Sequelize.STRING,

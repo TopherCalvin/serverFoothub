@@ -4,6 +4,7 @@ module.exports = (sequelize, Sequelize) => {
     {
       name: Sequelize.STRING,
       address: Sequelize.STRING,
+      road: Sequelize.STRING,
       province: Sequelize.STRING,
       city: Sequelize.STRING,
       district: Sequelize.STRING,

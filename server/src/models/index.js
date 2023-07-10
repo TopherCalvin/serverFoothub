@@ -56,14 +56,14 @@ db.shoes = require("./shoe")(sequelize, Sequelize); //id;(category, brand)
 db.shoeImgs = require("./shoeImg")(sequelize, Sequelize); //id;(shoe)
 db.addresses = require("./address")(sequelize, Sequelize); //id;(user)
 db.carts = require("./cart")(sequelize, Sequelize); //id;(shoe, user)
-db.users = require("./user")(sequelize, Sequelize); //id; (warehouse)
+db.users = require("./user")(sequelize, Sequelize); //id;(warehouse)
+db.cities = require("./city")(sequelize, Sequelize); //id;(province)
 db.warehouses = require("./warehouse")(sequelize, Sequelize);
 db.shoeSizes = require("./shoeSize")(sequelize, Sequelize);
 db.categories = require("./category")(sequelize, Sequelize);
 db.provinces = require("./province")(sequelize, Sequelize);
 db.brands = require("./brand")(sequelize, Sequelize);
 db.tokens = require("./token")(sequelize, Sequelize);
-db.cities = require("./city")(sequelize, Sequelize);
 
 // db.stock_Mutations foreignKey
 db.warehouses.hasMany(db.stockMutations, {
@@ -148,6 +148,12 @@ db.users.hasMany(db.carts, { foreignKey: "user_id", targetKey: "id" });
 db.warehouses.hasMany(db.users, {
   foreignKey: "warehouse_id",
   targetKey: "id",
+});
+
+//db.cities foreignKey
+db.provinces.hasMany(db.cities, {
+  foreignKey: "province_id",
+  targetKey: "province_id",
 });
 
 module.exports = db;

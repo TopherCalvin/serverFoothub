@@ -4,16 +4,13 @@ const { Op } = require("sequelize");
 const getAllStockHistoryControllers = {
   getAllHistories: async (req, res) => {
     try {
-      const page = parseInt(req.query?.page) || 0;
+      const { page, warehouse, month, year } = req.query;
+      page = parseInt(page) || 0;
       const limit = 5;
       const offset = limit * page;
-
-      let warehouse = req.query?.warehouse;
-      let month = req.query?.month;
       let filterStockHistory = {};
       let filterAdditional = {};
       let filterStock = {};
-      let year = req.query?.year;
       let response = [];
 
       if (warehouse) {
@@ -41,12 +38,15 @@ const getAllStockHistoryControllers = {
         raw: true,
       });
 
-      // all shoes with stock mutations
+      // all shoes with stock history
       let shoes = await db.shoes.findAndCountAll({
         include: [
           {
             model: db.stocks,
             include: [
+              {
+                model: db.shoeSizes,
+              },
               {
                 model: db.stockHistories,
                 where: filterStockHistory,
@@ -80,6 +80,9 @@ const getAllStockHistoryControllers = {
                 {
                   model: db.shoes,
                 },
+                {
+                  model: db.shoeSizes,
+                },
               ],
             },
           ],
@@ -89,8 +92,8 @@ const getAllStockHistoryControllers = {
         console.log("stockCount: ", stockCount);
 
         // stock in & out
-        stockCount.forEach((stockItem) => {
-          let difference = stockItem.stock_after - stockItem.stock_before;
+        stockCount.forEach((val) => {
+          let difference = val.stock_after - val.stock_before;
           if (difference < 0) {
             stockOut += Math.abs(difference);
           } else if (difference > 0) {
@@ -127,7 +130,7 @@ const getAllStockHistoryControllers = {
           let temp = 0;
           warehouseData.forEach(async (val) => {
             filterAdditional.warehouse_id = val.id;
-            let stockData = await db.stockHistories.findOne({
+            let stockData = await db.stockHistories.findAll({
               where: filterStockHistory,
               include: [
                 {
@@ -148,13 +151,12 @@ const getAllStockHistoryControllers = {
             });
 
             if (stockData) {
-              temp += stockData.stock_after;
             }
           });
           latestStock = temp;
         }
 
-        response.push({ name, products_id, stockIn, stockOut, latestStock });
+        response.push({ name, shoes_id, stockIn, stockOut, latestStock });
       });
 
       res.status(200).send({

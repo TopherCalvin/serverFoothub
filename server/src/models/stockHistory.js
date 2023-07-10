@@ -8,7 +8,7 @@ module.exports = (sequelize, Sequelize) => {
       stock_id: {
         type: Sequelize.INTEGER,
       },
-      status: Sequelize.ENUM("ADDED, DECREASED"),
+      status: Sequelize.ENUM("ADDED", "DECREASED"),
       reference: {
         type: Sequelize.STRING, //manual, transaction_code, mutationId
       },

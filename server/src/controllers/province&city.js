@@ -3,7 +3,7 @@ const axios = require("axios");
 const dotenv = require("dotenv");
 dotenv.config();
 const provinceCityControllers = {
-  getProvinceData: async (req, res) => {
+  addProvinceData: async (req, res) => {
     try {
       const response = await axios.get(
         "https://api.rajaongkir.com/starter/province",
@@ -18,7 +18,7 @@ const provinceCityControllers = {
     }
   },
 
-  getCityData: async (req, res) => {
+  addCityData: async (req, res) => {
     try {
       const response = await axios.get(
         "https://api.rajaongkir.com/starter/city",
