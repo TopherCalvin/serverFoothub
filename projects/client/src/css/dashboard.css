@@ -1,0 +1,35 @@
+/*--------------------- sidebar ---------------------*/
+.accordion-item:hover {
+  background: black;
+  color: white;
+}
+.accordion-item .accordion-panel:hover {
+  background: white;
+  color: black;
+}
+.accordion-item #asyu:hover {
+  background: white;
+  color: black;
+}
+.accordion-item #asyu {
+  padding: 5px;
+}
+/*--------------------- content ---------------------*/
+#content {
+  max-width: 1600px;
+}
+/*--------------------- @media ---------------------*/
+@media (max-width: 740px) {
+  #table-content {
+    display: none;
+  }
+  #card-content {
+    display: block;
+  }
+}
+
+@media (max-width: 450px) {
+  #button-add {
+    display: none;
+  }
+}
