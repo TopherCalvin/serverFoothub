@@ -32,13 +32,13 @@ export default function ConfirmStockMutation(props) {
   }, [props.id]);
 
   async function fetch() {
-    const response = await api.get(`/stockMutations/${props.id}`);
-    setStockMutation(response.data);
+    const response = await api().get(`/stockMutations/${props.id}`);
+    setStockMutation(response?.data?.stockMutation);
   }
 
   const confirmStockMutation = async () => {
     try {
-      const res = await api.patch("/stockMutations/confirm/" + props.id, {
+      const res = await api().patch("/stockMutations/confirm/" + props.id, {
         status: props.status,
       });
       toast({
@@ -46,11 +46,9 @@ export default function ConfirmStockMutation(props) {
         status: "success",
         position: "top",
       });
-      props.setShown({ page: 1 });
       props.fetch();
       clearData();
     } catch (err) {
-      console.log(err);
       toast({
         title: `${err.response.data}`,
         status: "error",

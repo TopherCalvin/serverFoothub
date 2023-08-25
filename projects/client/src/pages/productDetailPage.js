@@ -1,34 +1,74 @@
 import { useLocation } from "react-router-dom";
 import { api } from "../api/api";
 import { useEffect, useState } from "react";
-import { Box, Center, Flex, Image, Text, Button } from "@chakra-ui/react";
+import {
+  Box,
+  Center,
+  Flex,
+  Image,
+  Text,
+  Button,
+  useToast,
+} from "@chakra-ui/react";
 import Footer from "../components/website/footer";
 import { Recommend } from "../components/website/carousel";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { addProduct } from "../redux/cart";
+import Navbar from "../components/website/navbar";
 
 export default function ProductDetailPage() {
   const loc = useLocation();
   const userSelector = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
   let name = loc.pathname.split("/")[1];
   name = name.replace(/-/g, " ");
   const [shoe, setShoe] = useState();
   const [size, setSIze] = useState();
   const [stock, setStock] = useState();
+  const toast = useToast();
   const [selectedImage, setSelectedImage] = useState(0);
-  // console.log(shoe);
-  // console.log(size);
+  const [category, setCategory] = useState();
+  const [shoeId, setShoeId] = useState();
+  const [sizeAndStock, setSizeAndStock] = useState();
 
   useEffect(() => {
     getShoe();
   }, [name]);
 
+  useEffect(() => {
+    setCategory(shoe?.Category?.name);
+    setShoeId(shoe?.id);
+  }, [shoe]);
+
   const getShoe = async () => {
-    const res = await api.get("/shoes/" + name);
-    setShoe(res.data);
+    try {
+      const res = await api().get("/shoes/" + name);
+      setShoe(res.data.shoe);
+      setSizeAndStock(res.data.sizeAndStock);
+    } catch (err) {
+      console.log(err.response);
+    }
+  };
+
+  const handleToCart = async (name, size) => {
+    dispatch(
+      addProduct({
+        name,
+        size,
+      }),
+      toast({
+        title: "Successfully add shoe to cart",
+        status: "success",
+        position: "top",
+        duration: 5000,
+        isClosable: true,
+      })
+    );
   };
 
   return (
     <Center flexDir={"column"}>
+      <Navbar />
       <Box
         id="product-detail"
         display={"flex"}
@@ -47,7 +87,7 @@ export default function ProductDetailPage() {
           border={"2px"}
         >
           <Image
-            src={shoe?.ShoeImages[selectedImage]?.shoe_img}
+            src={`${process.env.REACT_APP_API_BASE_URL}/${shoe?.ShoeImages[selectedImage]?.shoe_img}`}
             objectFit={"cover"}
             w={"100%"}
           />
@@ -58,7 +98,11 @@ export default function ProductDetailPage() {
                 onClick={() => setSelectedImage(idx)}
                 _hover={{ transform: "scale(1.1,1.1)" }}
               >
-                <Image src={val.shoe_img} w={"4rem"} cursor={"pointer"} />
+                <Image
+                  src={`${process.env.REACT_APP_API_BASE_URL}/${val.shoe_img}`}
+                  w={"4rem"}
+                  cursor={"pointer"}
+                />
               </Box>
             ))}
           </Flex>
@@ -92,38 +136,37 @@ export default function ProductDetailPage() {
           <Flex flexDir={"column"} gap={1} id="detail">
             <Box id="detail"> select size:</Box>
             <Flex gap={2} flexWrap={"wrap"}>
-              {shoe?.stocks?.map((val) =>
-                val.stock < 10 ? (
-                  <Button
-                    isDisabled
-                    variant={"outline"}
-                    border={"1px"}
-                    borderRadius={0}
-                  >
-                    {val?.shoeSize?.size}
-                  </Button>
-                ) : (
-                  <Button
-                    isActive={size === val.shoeSize.size}
-                    _active={{ bg: "black", color: "white" }}
-                    variant={"outline"}
-                    border={"1px"}
-                    borderRadius={0}
-                    onClick={() => {
-                      size == val.shoeSize.size
-                        ? setSIze(null)
-                        : setSIze(val?.shoeSize?.size);
-                      stock == val.stock ? setStock(0) : setStock(val.stock);
-                    }}
-                  >
-                    {val?.shoeSize?.size}
-                  </Button>
-                )
-              )}
+              {sizeAndStock &&
+                sizeAndStock.map((val) =>
+                  val.stock <= 0 ? (
+                    <Button
+                      isDisabled
+                      variant={"outline"}
+                      border={"1px"}
+                      borderRadius={0}
+                    >
+                      {val?.size}
+                    </Button>
+                  ) : (
+                    <Button
+                      isActive={size === val.size}
+                      _active={{ bg: "black", color: "white" }}
+                      variant={"outline"}
+                      border={"1px"}
+                      borderRadius={0}
+                      onClick={() => {
+                        size == val.size ? setSIze(null) : setSIze(val?.size);
+                        stock == val.stock ? setStock(0) : setStock(val.stock);
+                      }}
+                    >
+                      {val?.size}
+                    </Button>
+                  )
+                )}
             </Flex>
             {stock ? (
-              <Box fontSize={"12px"} bg={"red"} color={"white"} id="detail">
-                Only {stock} left in stock
+              <Box fontSize={"12px"} color={"red"}>
+                {stock} left in stock
               </Box>
             ) : null}
           </Flex>
@@ -132,20 +175,15 @@ export default function ProductDetailPage() {
           <Flex flexDir={"column"} gap={1}>
             {userSelector.name ? (
               <Button
-                variant={"outline"}
-                border={"2px"}
-                borderRadius={0}
+                type="button"
+                id="button"
                 isDisabled={size ? false : true}
+                onClick={() => handleToCart(name, size)}
               >
                 Add to Cart
               </Button>
             ) : (
-              <Button
-                variant={"outline"}
-                border={"2px"}
-                borderRadius={0}
-                isDisabled
-              >
+              <Button type="button" id="button" isDisabled>
                 Add to Cart
               </Button>
             )}
@@ -157,7 +195,7 @@ export default function ProductDetailPage() {
           </Flex>
         </Flex>
       </Box>
-      <Recommend />
+      <Recommend category={category} id={shoeId} />
       <Footer />
     </Center>
   );

@@ -100,4 +100,49 @@ module.exports = {
       return err;
     }
   },
+  getWarehouse: async (body) => {
+    try {
+      const whereClause = {};
+      if (body?.id) {
+        whereClause.id = body?.id;
+      }
+      return await db.Warehouse.findAll({
+        where: whereClause,
+        attribute: ["id"],
+        limit: 1,
+      });
+    } catch (error) {
+      return error;
+    }
+  },
+  getWarehouseForSales: async (body) => {
+    try {
+      return await db.Warehouse.findAll({
+        where: { id: body?.id },
+        attribute: ["id"],
+      });
+    } catch (error) {
+      return error;
+    }
+  },
+  checkWarehouseSupply: async (body) => {
+    try {
+      return await db.Warehouse.findAll({
+        include: [
+          {
+            model: db.Stock,
+            where: {
+              shoe_id: body?.shoe_id,
+              shoe_size_id: body?.shoe_size_id,
+              stock: {
+                [Op.gte]: body?.qty,
+              },
+            },
+          },
+        ],
+      });
+    } catch (error) {
+      return error;
+    }
+  },
 };

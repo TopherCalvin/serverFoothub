@@ -14,7 +14,7 @@ export default function NavbarDashboard() {
         w="100%"
         pos="fixed"
         top="0"
-        zIndex="1"
+        zIndex="99"
         borderBottom=" #c2c2c2 solid"
         p={2}
         bg={"white"}
@@ -43,7 +43,10 @@ export default function NavbarDashboard() {
               <Text color={"gray"}>{userSelector.role}</Text>
             </Box>
             <Box>
-              <Avatar size="sm" />
+              <Avatar
+                size="sm"
+                src={`${process.env.REACT_APP_API_BASE_URL}/${userSelector.avatar_url}`}
+              />
             </Box>
           </Flex>
         </Flex>

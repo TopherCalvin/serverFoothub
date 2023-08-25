@@ -57,7 +57,7 @@ const roleDecoder = {
       });
       if (user.role != "ADMIN" && user.role != "SUPERADMIN") {
         throw new UnauthorizedError(
-          "You are a staff and is not authorized to access this feature."
+          "You are not a staff and is not authorized to access this feature."
         );
       }
       delete user.dataValues.password;
@@ -71,7 +71,6 @@ const roleDecoder = {
     try {
       const token = req.headers.authorization.split(" ")[1];
       const find = await findToken({ token, valid: 1 });
-
       if (!find) {
         throw new UnauthorizedError(
           "Token has expired. Please log in again(super)."
@@ -84,7 +83,7 @@ const roleDecoder = {
       });
       if (user.role != "SUPERADMIN") {
         throw new UnauthorizedError(
-          "You are a staff and is not authorized to access this feature."
+          "You are not authorized to access this feature."
         );
       }
       delete user.dataValues.password;

@@ -16,6 +16,7 @@ import {
 import { EditCategory } from "../components/dashboard/editCategory";
 import { DeleteCategory } from "../components/dashboard/deleteCategory";
 import ImageModal from "../components/dashboard/imageModal";
+import NavbarDashboard from "../components/dashboard/navbarDashboard";
 
 export default function CategoryPage() {
   const { isOpen, onClose, onOpen } = useDisclosure();
@@ -31,6 +32,7 @@ export default function CategoryPage() {
   const [categoyId, setCategoryId] = useState();
   return (
     <>
+      <NavbarDashboard />
       <Box id="content" pt={"52px"}>
         <Box mx={2} my={3}>
           <Flex justify={"space-between"} flexWrap={"wrap"}>
@@ -156,7 +158,9 @@ export default function CategoryPage() {
                       </Box>
                     )}
                     <Divider />
-                    <Image src={category.category_img} />
+                    <Image
+                      src={`${process.env.REACT_APP_API_BASE_URL}/${category.category_img}`}
+                    />
                   </Flex>
                 ))}
             </Flex>
@@ -185,7 +189,7 @@ export default function CategoryPage() {
                             setImg(category.category_img);
                             onOpen();
                           }}
-                          src={category.category_img}
+                          src={`${process.env.REACT_APP_API_BASE_URL}/${category.category_img}`}
                           w={"30px"}
                         />
                       </Td>

@@ -3,68 +3,81 @@ import {
   createEntityAdapter,
   createSlice,
 } from "@reduxjs/toolkit";
-import axios from "axios";
 import { api } from "../api/api";
 
 export const getCarts = createAsyncThunk("cart/getCarts", async () => {
-  let token = localStorage.getItem("user");
-  token = JSON.parse(token);
-  const response = await api.get("/carts/getCart", {
-    headers: { Authorization: token },
-  });
-  return response?.data?.data;
+  try {
+    const token = JSON.parse(localStorage.getItem("user"));
+    const response = await api().get("/carts/getCart", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response?.data?.data;
+  } catch (err) {
+    console.log(err.response?.data);
+  }
 });
 
 export const addProduct = createAsyncThunk(
   "cart/addProduct",
-  async ({ products_id, quantity }) => {
-    let token = localStorage.getItem("user");
-    token = JSON.parse(token);
+  async ({ name, size }) => {
+    try {
+      const token = JSON.parse(localStorage.getItem("user"));
 
-    const response = await api.get(
-      "/carts/addCart",
-      { products_id, quantity },
-      { headers: { Authorization: token } }
-    );
-    return response?.data?.data;
+      const response = await api().post(
+        "/carts",
+        { name, size },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return response?.data?.data;
+    } catch (err) {
+      console.log(err.response?.data);
+    }
   }
 );
 
 export const updateCarts = createAsyncThunk(
   "cart/updateCarts",
-  async ({ id, quantity }) => {
-    const token = localStorage.getItem("user");
+  async ({ id, qty }) => {
+    try {
+      const token = JSON.parse(localStorage.getItem("user"));
+      const response = await api().patch(
+        `/carts`,
+        { id, qty },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    const response = await axios.patch(
-      `${process.env.REACT_APP_API_BASE_URL}/cart`,
-      { id, quantity },
-      { headers: { Authorization: token } }
-    );
-    return response?.data?.data;
+      return response?.data?.data;
+    } catch (err) {
+      console.log(err.response?.data);
+    }
   }
 );
 
 export const deleteProduct = createAsyncThunk(
   "carts/deleteProduct",
   async (id) => {
-    const token = localStorage.getItem("user");
+    try {
+      const token = JSON.parse(localStorage.getItem("user"));
 
-    await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/cart/${id}`, {
-      headers: { Authorization: token },
-    });
-    return id;
+      await api().delete(`/carts/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return id;
+    } catch (err) {
+      console.log(err.response?.data);
+    }
   }
 );
 
 export const getTotalProductsInCart = (state) => {
   const cartItems = cartSelector.selectAll(state);
-  return cartItems.reduce((total, cartItem) => total + cartItem.quantity, 0);
+  return cartItems.reduce((total, cartItem) => total + cartItem.qty, 0);
 };
 
 export const getTotalPriceInCart = (state) => {
   const cartItems = cartSelector.selectAll(state);
   return cartItems.reduce(
-    (total, cartItem) => total + cartItem.quantity * cartItem.product.price,
+    (total, cartItem) => total + cartItem.qty * cartItem.Shoes?.price,
     0
   );
 };
@@ -72,10 +85,17 @@ export const getTotalPriceInCart = (state) => {
 export const getTotalWeightInCart = (state) => {
   const cartItems = cartSelector.selectAll(state);
   return cartItems.reduce(
-    (total, cartItem) => total + cartItem.quantity * cartItem.product.weight,
+    (total, cartItem) => total + cartItem.qty * cartItem.Shoes?.weight,
     0
   );
 };
+
+// export const getNameSizeInCart = (state) => {
+//   const cartItems = cartSelector.selectAll(state);
+//   const checkName = cartItems?.Shoes?.name;
+//   const checkSize = cartItems?.ShoeSize?.size;
+//   return { checkName, checkSize };
+// };
 
 const cartEntity = createEntityAdapter({ selectId: (cart) => cart.id });
 

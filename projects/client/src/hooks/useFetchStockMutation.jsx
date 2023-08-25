@@ -7,9 +7,11 @@ export const useFetchStockMutation = (filter) => {
   const [stockMutations, setStockMutations] = useState({ rows: [] });
   const fetch = async () => {
     try {
-      await api.get("/stockMutations", { params: filter }).then((res) => {
-        setStockMutations(res.data);
-      });
+      await api()
+        .get("/stockMutations", { params: filter })
+        .then((res) => {
+          setStockMutations(res.data);
+        });
     } catch (err) {
       return err;
     }

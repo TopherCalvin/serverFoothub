@@ -29,20 +29,19 @@ export default function DeleteStockMutation(props) {
   }, [props.id]);
 
   async function fetch() {
-    const response = await api.get(`/stockMutations/${props.id}`);
-    setStockMutation(response.data);
+    const response = await api().get(`/stockMutations/${props.id}`);
+    setStockMutation(response?.data?.stockMutation);
   }
 
   const deleteStockMutation = async () => {
     try {
-      const res = await api.delete("/stockMutations/" + props.id);
+      const res = await api().delete("/stockMutations/" + props.id);
       toast({
         title: res.data.message,
         status: "success",
         position: "top",
       });
       props.setShown({ page: 1 });
-      props.fetch();
       clearData();
     } catch (err) {
       toast({

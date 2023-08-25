@@ -40,7 +40,7 @@ export default function AddAdmin(props) {
     formData.append("avatar", selectedFile);
 
     try {
-      const response = await api.post("/auth/admin", formData);
+      const response = await api().post("/auth/admin", formData);
       toast({
         title: response.data.message,
         status: "success",
@@ -49,7 +49,7 @@ export default function AddAdmin(props) {
       props.fetch();
       props.onClose();
     } catch (err) {
-      console.log(err.response.data);
+      console.log(err);
     }
   };
 

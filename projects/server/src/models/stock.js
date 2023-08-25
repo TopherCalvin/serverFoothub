@@ -2,7 +2,10 @@ module.exports = (sequelize, Sequelize) => {
   const stocks = sequelize.define(
     "stocks",
     {
-      stock: Sequelize.INTEGER,
+      stock: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+      },
       shoe_id: {
         type: Sequelize.INTEGER,
       },
@@ -11,6 +14,10 @@ module.exports = (sequelize, Sequelize) => {
       },
       warehouse_id: {
         type: Sequelize.INTEGER,
+      },
+      booked_stock: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
       },
     },
     {

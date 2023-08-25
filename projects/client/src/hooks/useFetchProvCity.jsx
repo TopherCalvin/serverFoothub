@@ -6,10 +6,10 @@ export const useFetchProv = () => {
 
   const fetch = async () => {
     try {
-      const res = await api.get(`/province&city/prov`);
+      const res = await api().get(`/province&city/prov`);
       setProvinces(res.data);
     } catch (err) {
-      console.log(err.response.data);
+      console.log(err);
     }
   };
 
@@ -26,13 +26,13 @@ export const useFetchCity = (province_id) => {
   const fetch = async () => {
     try {
       if (province_id) {
-        const res = await api.get("/province&city/city/" + province_id);
+        const res = await api().get("/province&city/city/" + province_id);
         setCities(res.data);
       } else {
         setCities([]);
       }
     } catch (err) {
-      console.log(err.response.data);
+      console.log(err);
     }
   };
 

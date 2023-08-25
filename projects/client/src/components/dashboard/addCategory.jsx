@@ -17,7 +17,7 @@ export function AddCategory(props) {
     formData.append("category", selectedFile);
 
     try {
-      const res = await api.post("/categories", formData);
+      const res = await api().post("/categories", formData);
       toast({
         title: res.data.message,
         status: "success",
@@ -27,7 +27,7 @@ export function AddCategory(props) {
       props.onClose();
     } catch (err) {
       toast({
-        title: err.response.data,
+        title: err?.response?.data,
         status: "error",
         position: "top",
       });
@@ -83,7 +83,7 @@ export function AddSubCategory(props) {
 
   const addSub = async () => {
     try {
-      const res = await api.post("/subcategories", { name, category_id });
+      const res = await api().post("/subcategories", { name, category_id });
       toast({
         title: res.data.message,
         status: "success",
@@ -94,7 +94,7 @@ export function AddSubCategory(props) {
       props.onClose();
     } catch (err) {
       toast({
-        title: err.response.data,
+        title: err?.response?.data,
         status: "success",
         position: "top",
       });
@@ -151,7 +151,7 @@ export function AddBrand(props) {
     }
 
     try {
-      const res = await api.post("/brands", formData);
+      const res = await api().post("/brands", formData);
       toast({
         title: res.data.message,
         status: "success",
@@ -160,7 +160,7 @@ export function AddBrand(props) {
       props.fetch();
       clearB();
     } catch (err) {
-      console.log(err.response.data);
+      console.log(err);
     }
   };
 

@@ -1,27 +1,35 @@
 const db = require("../models");
-const CATEGORY_URL = process.env.CATEGORY_URL;
 const fs = require("fs");
+const { errorResponse } = require("../utils/function");
+const { CustomError } = require("../utils/customErrors");
 
+//-------------------------------------------------- DONE CLEAN CODE! -FAHMI
 const categoryController = {
   addCategory: async (req, res) => {
     const t = await db.sequelize.transaction();
+    const filename = req?.file?.filename;
     try {
       const { name } = req.body;
-      const filename = req?.file?.filename;
       const check = await db.Category.findOne({ where: { name } });
 
       if (check) {
-        fs.unlinkSync(req.file.path);
+        if (filename) {
+          fs.unlinkSync(`${__dirname}/../public/category/${filename}`);
+        }
         return res.status(400).send({ message: "name alrdy exist" });
       }
+
       await db.Category.create(
-        { name, category_img: CATEGORY_URL + filename },
+        { name, category_img: filename ? "category/" + filename : null },
         { transaction: t }
       );
+
       await t.commit();
       return res.status(200).send({ message: "success add Category" });
     } catch (err) {
-      fs.unlinkSync(req.file.path);
+      if (filename) {
+        fs.unlinkSync(`${__dirname}/../public/category/${filename}`);
+      }
       await t.rollback();
       return res.status(500).send(err.message);
     }
@@ -58,6 +66,24 @@ const categoryController = {
       return res.status(500).send(err.message);
     }
   },
+  getAllCategorySelect: async (req, res) => {
+    try {
+      const categories = await db.Category.findAll();
+      return res.status(200).send(categories);
+    } catch (err) {
+      errorResponse(res, err, CustomError);
+    }
+  },
+  getAllSubSelect: async (req, res) => {
+    try {
+      const subcategories = await db.SubCategory.findAll({
+        where: { category_id: req.query.category_id },
+      });
+      return res.status(200).send(subcategories);
+    } catch (err) {
+      errorResponse(res, err, CustomError);
+    }
+  },
   getCategoryById: async (req, res) => {
     try {
       const category = await db.Category.findOne({
@@ -80,33 +106,44 @@ const categoryController = {
   },
   editCategory: async (req, res) => {
     const t = await db.sequelize.transaction();
+    const filename = req?.file?.filename;
     try {
-      const { name, category } = req.body;
-      const filename = req?.file?.filename || category;
+      const { name } = req.body;
       const check = await db.Category.findOne({ where: { id: req.params.id } });
 
-      if (check?.dataValues?.category_img) {
-        fs.unlinkSync(
-          `${__dirname}/../public/category/${
-            check.dataValues.category_img.split("/")[5]
-          }`
-        );
+      if (check) {
+        if (filename) {
+          fs.unlinkSync(`${__dirname}/../public/category/${filename}`);
+        }
+        return res.status(400).send({ message: "name alrdy exist" });
       }
 
       await db.Category.update(
         {
           name,
-          category_img: !req?.file?.filename
-            ? category
-            : CATEGORY_URL + filename,
+          category_img: filename
+            ? "category/" + filename
+            : check?.dataValues?.category_img || null,
         },
-        { where: { id: req.params.id } },
-        { transaction: t }
+        { where: { id: req.params.id }, transaction: t }
       );
+
+      if (check?.dataValues?.category_img) {
+        if (filename) {
+          fs.unlinkSync(
+            `${__dirname}/../public/category/${
+              check.dataValues.category_img.split("/")[1]
+            }`
+          );
+        }
+      }
+
       await t.commit();
       return res.status(200).send({ message: "success edit category" });
     } catch (err) {
-      fs.unlinkSync(req.file.path);
+      if (filename) {
+        fs.unlinkSync(`${__dirname}/../public/category/${filename}`);
+      }
       await t.rollback();
       return res.status(500).send(err.message);
     }
@@ -117,8 +154,7 @@ const categoryController = {
       const { name } = req.body;
       await db.SubCategory.update(
         { name },
-        { where: { id: req.params.id } },
-        { transaction: t }
+        { where: { id: req.params.id }, transaction: t }
       );
       await t.commit();
       return res.status(200).send({ message: "success edit subcategory" });
@@ -132,23 +168,23 @@ const categoryController = {
     try {
       const check = await db.Category.findOne({ where: { id: req.params.id } });
 
-      await db.SubCategory.destroy(
-        { where: { category_id: req.params.id } },
-        { transaction: t }
-      );
+      await db.SubCategory.destroy({
+        where: { category_id: req.params.id },
+        transaction: t,
+      });
+
+      await db.Category.destroy({
+        where: { id: req.params.id },
+        transaction: t,
+      });
 
       if (check?.dataValues?.category_img) {
         fs.unlinkSync(
           `${__dirname}/../public/category/${
-            check.dataValues.category_img.split("/")[5]
+            check.dataValues.category_img.split("/")[1]
           }`
         );
       }
-
-      await db.Category.destroy(
-        { where: { id: req.params.id } },
-        { transaction: t }
-      );
 
       await t.commit();
       return res.status(200).send({ message: "success delete category" });
@@ -160,10 +196,10 @@ const categoryController = {
   deleteSubcategory: async (req, res) => {
     const t = await db.sequelize.transaction();
     try {
-      await db.SubCategory.destroy(
-        { where: { id: req.params.id } },
-        { transaction: t }
-      );
+      await db.SubCategory.destroy({
+        where: { id: req.params.id },
+        transaction: t,
+      });
       await t.commit();
       return res.status(200).send({ message: "success delete subcategory" });
     } catch (err) {

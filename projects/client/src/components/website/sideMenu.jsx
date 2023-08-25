@@ -39,14 +39,17 @@ export default function SideMenu(props) {
           <DrawerBody p={0}>
             <Accordion allowToggle className="Accordion">
               {userSelector.name ? (
-                <Link to={"/profile"}>
+                <Link to={"/my-account"}>
                   <AccordionItem
                     className="accordion-item"
                     onClick={props.onClose}
                   >
                     <AccordionButton>
                       <Flex fontWeight={"bold"} alignItems={"center"} gap={2}>
-                        <Avatar size={"sm"} />
+                        <Avatar
+                          size={"sm"}
+                          src={`${process.env.REACT_APP_API_BASE_URL}/${userSelector.avatar_url}`}
+                        />
                         <Box>Hi, {userSelector.name}</Box>
                       </Flex>
                     </AccordionButton>
@@ -54,7 +57,10 @@ export default function SideMenu(props) {
                 </Link>
               ) : (
                 <Link to={"/auth"}>
-                  <AccordionItem className="accordion-item">
+                  <AccordionItem
+                    className="accordion-item"
+                    onClick={props.onClose}
+                  >
                     <AccordionButton fontWeight={"bold"}>
                       <Box> Login/Signup</Box>
                     </AccordionButton>
@@ -62,16 +68,27 @@ export default function SideMenu(props) {
                 </Link>
               )}
 
+              <Link to={"/shoes"}>
+                <AccordionItem
+                  className="accordion-item"
+                  onClick={props.onClose}
+                >
+                  <AccordionButton fontWeight={"bold"}>
+                    <Box> All Shoes</Box>
+                  </AccordionButton>
+                </AccordionItem>
+              </Link>
+
               <AccordionItem className="accordion-item">
                 <AccordionButton _expanded={{ bg: "black", color: "white" }}>
                   <Box as="span" flex="1" textAlign="left" fontWeight={"bold"}>
-                    BRANDS
+                    Brands
                   </Box>
                   <AccordionIcon />
                 </AccordionButton>
                 <AccordionPanel display={"flex"} flexDir={"column"} p={0}>
                   {brands?.map((val, idx) => (
-                    <Link to={`/b/${val.name}`}>
+                    <Link to={`/b/${val.name.replace(/ /g, "-")}`}>
                       <Box id="asyu" onClick={props.onClose}>
                         {val.name}
                       </Box>
@@ -108,20 +125,22 @@ export default function SideMenu(props) {
                   </AccordionItem>
                 ))}
 
-              <AccordionItem
-                className="accordion-item"
-                onClick={() => {
-                  localStorage.removeItem("user");
-                  dispatch({
-                    type: "logout",
-                  });
-                  props.onClose();
-                }}
-              >
-                <AccordionButton fontWeight={"bold"}>
-                  <Box> Logout</Box>
-                </AccordionButton>
-              </AccordionItem>
+              {userSelector.email ? (
+                <AccordionItem
+                  className="accordion-item"
+                  onClick={() => {
+                    localStorage.removeItem("user");
+                    dispatch({
+                      type: "logout",
+                    });
+                    props.onClose();
+                  }}
+                >
+                  <AccordionButton fontWeight={"bold"}>
+                    <Box> Logout</Box>
+                  </AccordionButton>
+                </AccordionItem>
+              ) : null}
             </Accordion>
           </DrawerBody>
         </DrawerContent>

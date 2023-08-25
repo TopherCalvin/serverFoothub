@@ -131,11 +131,11 @@ export default function Sidebar(props) {
                   <AccordionIcon />
                 </AccordionButton>
                 <AccordionPanel display={"flex"} flexDir={"column"} p={0}>
-                  <Link to="/">
-                    <Box id="asyu">blala</Box>
+                  <Link to="/orderList">
+                    <Box id="asyu">Order List</Box>
                   </Link>
-                  <Link to="/">
-                    <Box id="asyu">blabla</Box>
+                  <Link to="/salesReport">
+                    <Box id="asyu">Sales Report</Box>
                   </Link>
                   <Link to="/">
                     <Box id="asyu">blabla</Box>

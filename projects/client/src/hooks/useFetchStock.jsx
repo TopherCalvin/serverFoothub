@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/api";
 import { useSelector } from "react-redux";
+import { useToast } from "@chakra-ui/react";
 
 export const useFetchStock = (filter) => {
   const [stocks, setStocks] = useState({ rows: [] });
   const fetch = async () => {
     try {
-      const res = await api.get(`/stocks`, {
+      const resGetStocks = await api().get(`/stocks`, {
         params: { ...filter },
       });
-      setStocks(res.data);
-
+      setStocks(resGetStocks.data);
     } catch (err) {
-      console.log(err.response.data);
+      console.log(err);
+      return err;
     }
   };
 
@@ -24,12 +25,30 @@ export const useFetchStock = (filter) => {
 
   return { stocks, fetch };
 };
+export const useFetchStockId = (id) => {
+  const toast = useToast();
+  const [stock, setStock] = useState({});
+  const fetch = async () => {
+    try {
+      const resGetStock = await api().get(`/stocks/${id}`);
+      setStock(resGetStock?.data?.stock);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  useEffect(() => {
+    if (id) {
+      fetch();
+    }
+  }, [id]);
+  return { stock, setStock };
+};
 export const useFetchFromStock = (from_warehouse_id) => {
   const userSelector = useSelector((state) => state.auth);
   const [stocks, setStocks] = useState([]);
   const fetch = async () => {
     try {
-      const resGetFW = await api.get(`/stocks/fromStock`, {
+      const resGetFW = await api().get(`/stocks/fromStock`, {
         params: {
           warehouse_id: from_warehouse_id,
         },
