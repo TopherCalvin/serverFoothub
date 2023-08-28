@@ -159,7 +159,11 @@
 /*---------------------- product detail ----------------------*/
 
 #detail-product {
-  width: 30%;
+  width: 40%;
+  border: 2px solid;
+}
+#detail-product-ordersummary {
+  width: 40%;
   border: 2px solid;
 }
 #detail-product #detail {
@@ -167,6 +171,19 @@
   padding: 5px;
 }
 
+/*---------------------- cart ----------------------*/
+.cart-card {
+  display: flex;
+  gap: 7px;
+  border: 1px solid;
+  justify-content: space-between;
+}
+/*---------------------- checkout ----------------------*/
+.courier {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
 /*---------------------- scroll ----------------------*/
 ::-webkit-scrollbar {
   width: 5px;
@@ -295,7 +312,7 @@
 /*---------------------- Order list ----------------------*/
 .orderlist-filter {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
   gap: 10px;
 }
 .orderlist-card {
@@ -340,6 +357,13 @@
     grid-template-columns: 1fr;
     gap: 5px;
   }
+
+  #detail-product-ordersummary {
+    display: none;
+  }
+  #accordion-summary {
+    display: block;
+  }
 }
 
 @media (max-width: 630px) {
@@ -368,6 +392,7 @@
     object-fit: cover;
   }
 }
+
 @media (max-width: 630px) {
   .category {
     grid-template-columns: 1fr;
@@ -380,7 +405,14 @@
   .form-profile {
     flex-direction: column;
   }
+  .courier {
+    display: none;
+  }
+  #courier-select {
+    display: block;
+  }
 }
+
 @media (max-width: 400px) {
   .orderlist-filter {
     grid-template-columns: 1fr;
