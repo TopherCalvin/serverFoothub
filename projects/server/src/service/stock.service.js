@@ -17,6 +17,7 @@ module.exports = {
             include: [{ model: db.City, attributes: ["city_id", "city_name"] }],
           },
         ],
+        distinct: true,
         limit,
         offset,
         order: [[...sort, order]],
@@ -108,7 +109,7 @@ module.exports = {
       }
       if (body?.stock) {
         update.stock = body?.stock;
-        if (body.booked_stock) update.booked_stock = body.booked_stock;
+        if (body?.booked_stock) update.booked_stock = body?.booked_stock;
       }
       return await db.Stock.update(update, {
         where: whereClause,
