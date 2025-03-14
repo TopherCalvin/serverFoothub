@@ -3,6 +3,7 @@ const { Op } = require("sequelize");
 const fs = require("fs");
 const { errorResponse } = require("../utils/function");
 const { CustomError } = require("../utils/customErrors");
+const path = require("path");
 const includeOptions = [
   {
     model: db.Brand,
@@ -35,10 +36,14 @@ const shoeController = {
       const check = await db.Shoe.findOne({ where: { name: req?.body?.name } });
 
       if (check) {
-        if (req.files) {
+        if (req?.files) {
           for (const file of req.files) {
-            const { filename } = file;
-            fs.unlinkSync(`${__dirname}/../public/shoe/${filename}`);
+            try {
+              const { filename } = file;
+              fs.unlinkSync(path.join(__dirname, `../public/shoe/${filename}`));
+            } catch (err) {
+              console.log(err);
+            }
           }
         }
         return res.status(400).send({ message: "name alrdy exist" });
@@ -73,8 +78,12 @@ const shoeController = {
     } catch (err) {
       if (req.files) {
         for (const file of req.files) {
-          const { filename } = file;
-          fs.unlinkSync(`${__dirname}/../public/shoe/${filename}`);
+          try {
+            const { filename } = file;
+            fs.unlinkSync(path.join(__dirname, `../public/shoe/${filename}`));
+          } catch (err) {
+            console.log(err);
+          }
         }
       }
       await t.rollback();
@@ -239,8 +248,9 @@ const shoeController = {
         const images = check.map((image) => image.shoe_img);
         for (img of images) {
           try {
-            fs.unlinkSync(`${__dirname}/../public/shoe/${img.split("/")[1]}`);
-            console.log(`berhasil delete sepatu ${img}`);
+            fs.unlinkSync(
+              path.join(__dirname, `../public/shoe/${img.split("/")[1]}`)
+            );
           } catch (err) {
             console.log(err.message);
           }
@@ -248,10 +258,13 @@ const shoeController = {
       } else if (check?.length) {
         try {
           fs.unlinkSync(
-            `${__dirname}/../public/shoe/${check.shoe_img.split("/")[1]}`
+            path.join(
+              __dirname,
+              `../public/shoe/${check.shoe_img.split("/")[1]}`
+            )
           );
         } catch (err) {
-          console.log(err.message);
+          console.log(err);
         }
       }
 
@@ -269,14 +282,18 @@ const shoeController = {
         where: { shoe_id: req.params.id },
       });
       const checkName = await db.Shoe.findOne({
-        where: { name: req?.body?.name },
+        where: { name: req?.body?.name, id: { [Op.not]: req.params.id } },
       });
 
       if (checkName) {
-        if (req.files) {
-          for (const file of req.files) {
-            const { filename } = file;
-            fs.unlinkSync(`${__dirname}/../public/shoe/${filename}`);
+        if (req.files.length) {
+          try {
+            for (const file of req.files) {
+              const { filename } = file;
+              fs.unlinkSync(path.join(__dirname, `../public/shoe/${filename}`));
+            }
+          } catch (err) {
+            console.log(err);
           }
         }
         return res.status(400).send({ message: "name alrdy exist" });
@@ -308,25 +325,18 @@ const shoeController = {
           transaction: t,
         });
         await db.ShoeImage.bulkCreate(imageArr, { transaction: t });
-      }
 
-      if (check?.length > 1) {
-        const images = check.map((image) => image.shoe_img);
-        for (img of images) {
-          try {
-            fs.unlinkSync(`${__dirname}/../public/shoe/${img.split("/")[1]}`);
-            console.log(`berhasil delete sepatu ${img}`);
-          } catch (err) {
-            console.log(err.message);
+        if (check?.length) {
+          const images = check.map((image) => image.shoe_img);
+          for (img of images) {
+            try {
+              fs.unlinkSync(
+                path.join(__dirname, `../public/shoe/${img.split("/")[1]}`)
+              );
+            } catch (err) {
+              console.log(err);
+            }
           }
-        }
-      } else if (check?.length) {
-        try {
-          fs.unlinkSync(
-            `${__dirname}/../public/shoe/${check.shoe_img.split("/")[1]}`
-          );
-        } catch (err) {
-          console.log(err.message);
         }
       }
 
@@ -334,9 +344,13 @@ const shoeController = {
       return res.status(200).send({ message: "success update shoe" });
     } catch (err) {
       if (req.files) {
-        for (const file of req.files) {
-          const { filename } = file;
-          fs.unlinkSync(`${__dirname}/../public/shoe/${filename}`);
+        try {
+          for (const file of req.files) {
+            const { filename } = file;
+            fs.unlinkSync(path.join(__dirname, `../public/shoe/${filename}`));
+          }
+        } catch (err) {
+          console.log(err);
         }
       }
       await t.rollback();
@@ -346,16 +360,14 @@ const shoeController = {
   setBestSeller: async (req, res) => {
     const t = await db.sequelize.transaction();
     try {
+      console.log(req.body);
       const shoe_ids = req.body.shoe_ids || [];
+      console.log(shoe_ids);
       await db.Shoe.update(
         { status: "NORMAL" },
         { where: { status: "BESTSELLER" }, transaction: t }
       );
       for (const id of shoe_ids) {
-        const shoe = await db.Shoe.findOne({ where: { id } });
-        if (!shoe) {
-          return res.status(200).send({ message: "shoe not found" });
-        }
         await db.Shoe.update(
           { status: "BESTSELLER" },
           { where: { id }, transaction: t }

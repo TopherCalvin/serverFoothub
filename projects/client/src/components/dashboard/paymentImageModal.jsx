@@ -12,16 +12,19 @@ import {
   Flex,
 } from "@chakra-ui/react";
 import { api } from "../../api/api";
+import { useEffect, useState } from "react";
 
 export default function PaymentImageModal(props) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingButton, setIsLoadingButton] = useState(false);
   const toast = useToast();
   async function confirmOrder(status) {
+    setIsLoadingButton(true);
     try {
       const res = await api().patch(`/orders/admin/${props?.order?.id}`, {
         status,
       });
       props.fetch();
-      clearData();
       toast({
         title: res.data.message,
         status: "success",
@@ -29,22 +32,25 @@ export default function PaymentImageModal(props) {
         duration: 3000,
       });
     } catch (error) {
-      console.log(error);
       toast({
         title: error.response.data.message,
         status: "error",
         isClosable: true,
         duration: 3000,
       });
+    } finally {
+      setIsLoadingButton(false);
+      clearData();
     }
   }
-  function clearData() {
-    try {
-      props.setOrder(null);
-      props.onClose();
-    } catch (error) {
-      console.log(error);
+  useEffect(() => {
+    if (props?.order?.payment_proof) {
+      setIsLoading(false);
     }
+  }, [props.order]);
+  function clearData() {
+    props.setOrder(null);
+    props.onClose();
   }
   return (
     <>
@@ -62,14 +68,31 @@ export default function PaymentImageModal(props) {
           </ModalBody>
           <ModalFooter>
             <Flex w={"100%"} justifyContent={"space-between"}>
-              <Button onClick={() => confirmOrder("CANCELED")}>
+              <Button
+                isLoading={isLoadingButton}
+                onClick={() => confirmOrder("CANCELED")}
+              >
                 Cancel Order
               </Button>
               <Flex gap={"5px"} w={"50%"}>
-                <Button onClick={() => confirmOrder("PAYMENT")}>
-                  Reject Payment
-                </Button>
-                <Button onClick={() => confirmOrder("PROCESSING")}>
+                {props?.order?.status == "CONFIRM_PAYMENT" ? (
+                  <Button
+                    isLoading={isLoadingButton}
+                    onClick={() => confirmOrder("PAYMENT")}
+                  >
+                    Reject Payment
+                  </Button>
+                ) : null}
+                <Button
+                  isLoading={isLoadingButton}
+                  onClick={() => {
+                    if (props?.order?.status == "CONFIRM_PAYMENT") {
+                      confirmOrder("PROCESSING");
+                    } else if (props?.order?.status == "PROCESSING") {
+                      confirmOrder("DELIVERY");
+                    }
+                  }}
+                >
                   Process Order
                 </Button>
               </Flex>

@@ -1,89 +1,92 @@
 import { Box, Divider, Flex, Image, Text } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { api } from "../../api/api";
+import { useSelector } from "react-redux";
+import { useFetchShoe } from "../../hooks/useFetchShoe";
 export default function BestSellerShoe(props) {
+  const userSelector = useSelector((state) => state.auth);
   const { salesData } = props;
-  const [bestShoes, setBestShoes] = useState([]);
+  const [filter, setFilter] = useState({ limit: 50 });
+  const { shoes } = useFetchShoe("", "", filter);
+  console.log(shoes);
   async function dataProcessor() {
-    const bS = salesData.reduce((prev, curr) => {
-      const shoe = curr.stock.Sho.name;
-      if (prev[shoe]) {
-        prev[shoe].qty += curr?.qty;
-      } else {
-        prev[shoe] = curr;
-      }
-      return prev;
-    }, {});
-    const bestSeller = [];
-    Object.keys(bS).map((val) => {
-      if (bestSeller.length < 5) {
-        bestSeller.push(bS[val]);
-      } else {
-        if (bS[val].qty > bestSeller[1].qty) {
-          bestSeller.splice(0, 1, bS[val]);
-        } else if (bS[val] > bestSeller[2].qty) {
-          bestSeller.splice(1, 1, bS[val]);
-        } else if (bS[val] > bestSeller[3].qty) {
-          bestSeller.splice(2, 1, bS[val]);
-        } else if (bS[val] > bestSeller[4].qty) {
-          bestSeller.splice(3, 1, bS[val]);
-        } else if (bS[val] > bestSeller[5].qty) {
-          bestSeller.splice(4, 1, bS[val]);
+    try {
+      const bS = salesData.reduce((prev, curr) => {
+        const shoe = curr.stock.Sho.name;
+        if (prev[shoe]) {
+          prev[shoe].qty += curr?.qty;
+        } else {
+          prev[shoe] = curr;
         }
+        return prev;
+      }, {});
+      const bestSeller = Object.entries(bS)
+        .sort((a, b) => b[1].qty - a[1].qty)
+        .map((val) => val[1].stock.shoe_id);
+      bestSeller.length = 5;
+
+      if (userSelector.role == "SUPERADMIN") {
+        const res = await api().patch("/shoes/bestSeller", {
+          shoe_ids: bestSeller,
+        });
       }
-      setBestShoes(bestSeller);
-    });
-    const res = await api().patch("/shoes/bestSeller", {
-      shoe_ids: bestSeller.map((val) => val.stock.shoe_id),
-    });
+    } catch (error) {
+      return error;
+    }
   }
   useEffect(() => {
     dataProcessor();
   }, [salesData]);
   return (
-    <>
-      <Flex p={5}>
-        {bestShoes.map((val, idx) => (
-          <Flex
-            flexDir={"column"}
-            p={1}
-            border={"1px"}
-            maxW={"500px"}
-            w={"90%"}
-          >
-            <Box
-              className="shoe-list"
-              _hover={{ bg: "black", color: "white" }}
-              pos={"relative"}
-              maxW={"500px"}
-              w={"100%"}
-              h={"500px"}
-              border={"1px solid black"}
-            >
-              <Image
-                src={`${process.env.REACT_APP_API_BASE_URL}/${val.stock?.Sho?.ShoeImages[0]?.shoe_img}`}
-              />
-              <Flex flexDir={"column"} p={2}>
-                <Text fontWeight={"bold"}>{val.stock?.Sho?.name}</Text>
-                <Divider />
-                <Text>{val.stock?.Sho?.brand?.name}</Text>
-                <Divider />
-                <Text fontSize={13} color={"gray"}>
-                  {val.stock?.Sho?.Category?.name}{" "}
-                  {val.stock?.Sho?.subcategory?.name}
-                </Text>
-                <Divider />
-                <Text>
-                  {val.stock?.Sho?.price.toLocaleString("id-ID", {
-                    style: "currency",
-                    currency: "IDR",
-                  })}
-                </Text>
+    <Flex flexDir={"column"} p={1}>
+      <Box fontWeight={"bold"} fontSize={"30px"}>
+        BEST SELLER
+      </Box>
+      <Flex
+        border={"2px"}
+        w={"100%"}
+        flexWrap={"wrap"}
+        justify={"center"}
+        gap={2}
+        p={2}
+      >
+        {shoes.rows.map((val) =>
+          val.status == "BESTSELLER" ? (
+            <>
+              <Flex flexDir={"column"} p={1} border={"1px"} w={"220px"}>
+                <Box
+                  className="shoe-list"
+                  _hover={{ bg: "black", color: "white" }}
+                  // maxW={"500px"}
+                  // w={"100%"}
+                >
+                  <Image
+                    src={`${process.env.REACT_APP_API_BASE_URL}/${val?.ShoeImages[0]?.shoe_img}`}
+                    w={"100%"}
+                    maxH={"250px"}
+                  />
+                  <Flex flexDir={"column"} p={2}>
+                    <Text fontWeight={"bold"}>{val.name}</Text>
+                    <Divider />
+                    <Text>{val?.brand?.name}</Text>
+                    <Divider />
+                    <Text fontSize={13} color={"gray"}>
+                      {val?.Category?.name} {val?.subcategory?.name}
+                    </Text>
+                    <Divider />
+                    <Text>
+                      {val?.price.toLocaleString("id-ID", {
+                        style: "currency",
+                        currency: "IDR",
+                      })}
+                    </Text>
+                  </Flex>
+                </Box>
               </Flex>
-            </Box>
-          </Flex>
-        ))}
+            </>
+          ) : null
+        )}
       </Flex>
-    </>
+    </Flex>
   );
 }

@@ -16,6 +16,7 @@ import {
   ModalCloseButton,
   ModalFooter,
   Box,
+  Input,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { api } from "../../api/api";
@@ -54,6 +55,7 @@ export default function AddStockMutation(props) {
         .required("Product name is required"),
     }),
     onSubmit: async () => {
+      setIsLoading(true);
       try {
         delete formik.values.from_warehouse_id;
         const resPostMutation = await api().post(
@@ -74,6 +76,8 @@ export default function AddStockMutation(props) {
           duration: 9000,
           isClosable: true,
         });
+      } finally {
+        setIsLoading(false);
       }
     },
   });
@@ -121,9 +125,7 @@ export default function AddStockMutation(props) {
                     (Stock available: {maxStock || "Select a stock"})
                   </Box>
                 </FormLabel>
-                <NumberInput>
-                  <NumberInputField placeholder="Qty" />
-                </NumberInput>
+                <Input type="number" placeholder="Quantity" />
                 <FormErrorMessage>{formik.errors.qty}</FormErrorMessage>
               </FormControl>
 
@@ -212,7 +214,7 @@ export default function AddStockMutation(props) {
                   ) : (
                     <>
                       {warehouses &&
-                        warehouses.map(
+                        warehouses?.map(
                           (val, idx) =>
                             val?.id != formik.values.from_warehouse_id && (
                               <option key={val.id} value={val.id}>
@@ -229,18 +231,13 @@ export default function AddStockMutation(props) {
               </FormControl>
             </form>
           </ModalBody>
-
           <ModalFooter>
             <Flex gap={5}>
               <Button onClick={clearData}>Cancel</Button>
               <Button
                 isLoading={isLoading}
                 onClick={() => {
-                  setIsLoading(true);
-                  setTimeout(() => {
-                    setIsLoading(false);
-                    formik.handleSubmit();
-                  }, 2000);
+                  formik.handleSubmit();
                 }}
               >
                 confirm

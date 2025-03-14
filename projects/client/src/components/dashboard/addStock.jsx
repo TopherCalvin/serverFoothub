@@ -14,14 +14,14 @@ import { useSelector } from "react-redux";
 
 export default function AddStock(props) {
   const toast = useToast();
-  const { shoes } = useFetchShoe();
+  const { shoes } = useFetchShoe("", "", { limit: 99 });
   const { sizes } = useFetchShoeSize();
   const { warehouses } = useFetchWarehouse();
   const [isLoading, setIsLoading] = useState(false);
   const userSelector = useSelector((state) => state.auth);
   const formik = useFormik({
     initialValues: {
-      stock: 1,
+      stock: 0,
       shoe_id: "",
       shoe_size_id: "",
       warehouse_id: "",
@@ -41,6 +41,7 @@ export default function AddStock(props) {
         .required("Warehouse Name is required"),
     }),
     onSubmit: async () => {
+      setIsLoading(true);
       try {
         const res = await api().post("/stocks", formik.values);
         toast({
@@ -49,7 +50,6 @@ export default function AddStock(props) {
           position: "top",
         });
         props.fetch();
-        clearData();
       } catch (err) {
         toast({
           title: `${err.response.data.message}`,
@@ -57,6 +57,9 @@ export default function AddStock(props) {
           duration: 9000,
           isClosable: true,
         });
+      } finally {
+        setIsLoading(false);
+        clearData();
       }
     },
   });
@@ -85,9 +88,7 @@ export default function AddStock(props) {
                 isInvalid={formik.touched.stock && formik.errors.stock}
               >
                 <FormLabel>Stock:</FormLabel>
-                <NumberInput>
-                  <NumberInputField placeholder="Stock" />
-                </NumberInput>
+                <Input type="number" placeholder="Quantity"></Input>
                 <FormErrorMessage>{formik.errors.stock}</FormErrorMessage>
               </FormControl>
 
@@ -169,11 +170,7 @@ export default function AddStock(props) {
             <Button
               isLoading={isLoading}
               onClick={() => {
-                setIsLoading(true);
-                setTimeout(() => {
-                  setIsLoading(false);
-                  formik.handleSubmit();
-                }, 2000);
+                formik.handleSubmit();
               }}
             >
               confirm

@@ -3,6 +3,7 @@ const fs = require("fs");
 const { errorResponse } = require("../utils/function");
 const { CustomError } = require("../utils/customErrors");
 const { Op } = require("sequelize");
+const path = require("path");
 
 //-------------------------------------------------- DONE CLEAN CODE! -FAHMI
 const categoryController = {
@@ -15,7 +16,13 @@ const categoryController = {
 
       if (check) {
         if (filename) {
-          fs.unlinkSync(`${__dirname}/../public/category/${filename}`);
+          try {
+            fs.unlinkSync(
+              path.join(__dirname, `../public/category/${filename}`)
+            );
+          } catch (err) {
+            console.log(err);
+          }
         }
         return res.status(400).send({ message: "name alrdy exist" });
       }
@@ -29,7 +36,11 @@ const categoryController = {
       return res.status(200).send({ message: "success add Category" });
     } catch (err) {
       if (filename) {
-        fs.unlinkSync(`${__dirname}/../public/category/${filename}`);
+        try {
+          fs.unlinkSync(path.join(__dirname, `../public/category/${filename}`));
+        } catch (err) {
+          console.log(err);
+        }
       }
       await t.rollback();
       return res.status(500).send(err.message);
@@ -61,6 +72,7 @@ const categoryController = {
         where: { name: { [Op.like]: `%${search}%` } },
         distinct: true,
         offset,
+        limit,
         order: [[sort, order]],
       });
       return res.status(200).send({
@@ -73,10 +85,40 @@ const categoryController = {
   },
   getAllSub: async (req, res) => {
     try {
-      const subcategories = await db.SubCategory.findAll({
+      const search = req?.query?.search || "";
+      const sort = req?.query?.sort || "name";
+      const order = req?.query?.order || "ASC";
+      const category = req?.query?.category || "";
+      const limit = req?.query?.limit || 8;
+      const page = req?.query?.page || 1;
+      const offset = (parseInt(page) - 1) * limit;
+      const whereClause = { [Op.and]: [] };
+
+      if (category) {
+        whereClause[Op.and].push({
+          "$Category.name$": { [Op.like]: `${category}%` },
+        });
+      } else if (search) {
+        whereClause[Op.and].push({
+          [Op.or]: [
+            { name: { [Op.like]: `%${search}%` } },
+            { "$Category.name$": { [Op.like]: `${search}%` } },
+          ],
+        });
+      }
+
+      const subcategories = await db.SubCategory.findAndCountAll({
         include: { model: db.Category },
+        where: whereClause,
+        limit,
+        distinct: true,
+        offset,
+        order: [[sort, order]],
       });
-      return res.status(200).send(subcategories);
+      return res.status(200).send({
+        ...subcategories,
+        totalPages: Math.ceil(subcategories.count / limit),
+      });
     } catch (err) {
       return res.status(500).send(err.message);
     }
@@ -125,10 +167,19 @@ const categoryController = {
     try {
       const { name } = req.body;
       const check = await db.Category.findOne({ where: { id: req.params.id } });
+      const checkName = await db.Category.findOne({
+        where: { name, id: { [Op.not]: req.params.id } },
+      });
 
-      if (check) {
+      if (checkName) {
         if (filename) {
-          fs.unlinkSync(`${__dirname}/../public/category/${filename}`);
+          try {
+            fs.unlinkSync(
+              path.join(__dirname, `../public/category/${filename}`)
+            );
+          } catch (err) {
+            console.log(err);
+          }
         }
         return res.status(400).send({ message: "name alrdy exist" });
       }
@@ -145,11 +196,18 @@ const categoryController = {
 
       if (check?.dataValues?.category_img) {
         if (filename) {
-          fs.unlinkSync(
-            `${__dirname}/../public/category/${
-              check.dataValues.category_img.split("/")[1]
-            }`
-          );
+          try {
+            fs.unlinkSync(
+              path.join(
+                __dirname,
+                `../public/category/${
+                  check.dataValues.category_img.split("/")[1]
+                }`
+              )
+            );
+          } catch (err) {
+            console.log(err);
+          }
         }
       }
 
@@ -157,7 +215,11 @@ const categoryController = {
       return res.status(200).send({ message: "success edit category" });
     } catch (err) {
       if (filename) {
-        fs.unlinkSync(`${__dirname}/../public/category/${filename}`);
+        try {
+          fs.unlinkSync(path.join(__dirname, `../public/category/${filename}`));
+        } catch (err) {
+          console.log(err);
+        }
       }
       await t.rollback();
       return res.status(500).send(err.message);
@@ -194,11 +256,18 @@ const categoryController = {
       });
 
       if (check?.dataValues?.category_img) {
-        fs.unlinkSync(
-          `${__dirname}/../public/category/${
-            check.dataValues.category_img.split("/")[1]
-          }`
-        );
+        try {
+          fs.unlinkSync(
+            path.join(
+              __dirname,
+              `../public/category/${
+                check.dataValues.category_img.split("/")[1]
+              }`
+            )
+          );
+        } catch (err) {
+          console.log(err);
+        }
       }
 
       await t.commit();

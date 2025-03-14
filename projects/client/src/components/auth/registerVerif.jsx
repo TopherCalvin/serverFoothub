@@ -40,6 +40,7 @@ export default function Verify() {
       phone: Yup.string()
         .min(10, "min 10 digits")
         .max(12, "max 12 digits")
+        .matches(/^((0)|(\+62))/, "Must start with 0 ")
         .required("required"),
       password: Yup.string()
         .matches(/^(?=.*[A-Z])/, "Must contain at least one uppercase")
@@ -53,18 +54,21 @@ export default function Verify() {
       ),
     }),
     onSubmit: async () => {
+      setIsLoading(true);
       try {
         const res = await api().patch("/auth/verify", formik.values);
         toast({
           title: res?.data?.message,
           status: "success",
         });
+        setIsLoading(false);
         return nav("/auth");
       } catch (err) {
         toast({
           title: err?.response?.data.message,
           status: "error",
         });
+        setIsLoading(false);
       }
     },
   });
@@ -234,13 +238,7 @@ export default function Verify() {
                     : true
                 }
                 isLoading={isLoading}
-                onClick={() => {
-                  setIsLoading(true);
-                  setTimeout(() => {
-                    formik.handleSubmit();
-                    setIsLoading(false);
-                  }, 2000);
-                }}
+                onClick={formik.handleSubmit}
               >
                 Confirm
               </Button>

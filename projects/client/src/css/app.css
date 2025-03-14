@@ -29,6 +29,12 @@
 .banner-carosel {
   border: 2px;
 }
+
+.faqpage {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
 /*---------------------- navbar ----------------------*/
 .navbar {
   background: rgba(255, 255, 255, 0.8);
@@ -63,6 +69,9 @@
 }
 .categorymenu {
   transform: translateY(25px);
+  background: white;
+  position: absolute;
+  border: 2px solid;
 }
 .burger,
 .search {
@@ -152,8 +161,7 @@
 }
 .shoe-list img {
   height: 330px;
-
-  width: 100vw;
+  width: 100%;
   object-fit: cover;
 }
 /*---------------------- product detail ----------------------*/
@@ -169,6 +177,9 @@
 #detail-product #detail {
   border: 1px solid;
   padding: 5px;
+}
+.sepatu-detail {
+  border: 2px solid black;
 }
 
 /*---------------------- cart ----------------------*/
@@ -323,6 +334,14 @@
 .orderlist-card #a {
   border: 1px solid;
 }
+.statusOrderList {
+  justify-content: center;
+}
+@media (max-width: 417px) {
+  .statusOrderList {
+    justify-content: left;
+  }
+}
 /*---------------------- @media ----------------------*/
 @media (max-width: 960px) {
   #brands-section {
@@ -364,6 +383,9 @@
   #accordion-summary {
     display: block;
   }
+  /* .sepatu-detail {
+    height: auto;
+  } */
 }
 
 @media (max-width: 630px) {
@@ -387,9 +409,11 @@
   }
   .shoe-list img {
     height: 230px;
-
     width: 100vw;
     object-fit: cover;
+  }
+  .faqpage {
+    grid-template-columns: 1fr;
   }
 }
 

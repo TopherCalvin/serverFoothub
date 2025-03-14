@@ -24,7 +24,7 @@ export default function OrderListPage() {
   //pagination ------------------------------------------------------
   const [pages, setPages] = useState([]);
   const [shown, setShown] = useState({ page: 1 });
-  const { orders, fetchOrdersList } = useFetchOrderList(filter);
+  const { orders } = useFetchOrderList(filter);
   function pageHandler() {
     const output = [];
     for (let i = 1; i <= orders.totalPages; i++) {
@@ -127,7 +127,7 @@ export default function OrderListPage() {
           <Flex flexDir={"column"} py={1}>
             <OrderListAdmin filter={filter} />
           </Flex>
-          <Flex p={2} m={2} justify={"center"} border={"2px"}>
+          <Flex p={2} m={2} justify={"center"}>
             <Pagination
               shown={shown}
               setShown={setShown}

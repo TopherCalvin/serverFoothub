@@ -23,7 +23,6 @@ export default function OrderDetailsModal(props) {
   const inputFileRef = useRef(null);
   const [SelectedFile, setSelectedFile] = useState(null);
   const paymentProofModal = useDisclosure();
-
   const formatDate = (isoDate) => {
     const options = {
       weekday: "long",
@@ -35,7 +34,15 @@ export default function OrderDetailsModal(props) {
   };
   const handleFile = (event) => {
     setSelectedFile(event.target.files[0]);
-    console.log(event.target.files[0]);
+  };
+
+  const fetchVal = async () => {
+    try {
+      const fetch = await api().get("/orders/admin/" + props.val.id);
+      props.setVal(fetch.data.order);
+    } catch (err) {
+      props.setVal(null);
+    }
   };
 
   const paymentProof = async () => {
@@ -43,15 +50,13 @@ export default function OrderDetailsModal(props) {
       const formData = new FormData();
       formData.append("payment_proof", SelectedFile);
       formData.append("id", props.val.id);
-      await api().patch("/orders/paymentProof", formData);
-      props.fetchOrders();
-
+      await api().patch("/orders/paymentProof/" + props.val.id, formData);
+      fetchVal();
       alert("successfully upload payment proof");
     } catch (err) {
-      console.log(err.response?.data);
+      alert(err.response?.data);
     }
   };
-
   return (
     <Modal
       scrollBehavior="inside"
@@ -121,7 +126,6 @@ export default function OrderDetailsModal(props) {
                 >
                   Batas Akhir Pembayaran
                 </Text>
-
                 <Text
                   key={props.val.id}
                   fontSize={"sm"}
@@ -130,7 +134,6 @@ export default function OrderDetailsModal(props) {
                 >
                   {formatDate(props.val.last_payment_date)}
                 </Text>
-
                 <Flex
                   w={"85%"}
                   h={"50px"}
@@ -152,6 +155,7 @@ export default function OrderDetailsModal(props) {
                     w={"60px"}
                     bg={"black"}
                     onClick={paymentProof}
+                    isDisabled={!SelectedFile}
                     size={"sm"}
                     fontSize={"x-small"}
                     color={"white"}
@@ -175,7 +179,6 @@ export default function OrderDetailsModal(props) {
               onClose={paymentProofModal.onClose}
             />
           </Center>
-
           <Flex w={"100%"} flexDir={"column"} mt={"10px"}>
             <Text fontWeight={"bold"}>Detail Produk</Text>
             {props.val?.orderDetails
@@ -253,7 +256,7 @@ export default function OrderDetailsModal(props) {
                     {props.val?.shipping_service} - {props.val?.shipping_method}
                   </Text>
                   <Text fontSize={"sm"} fontWeight={"bold"}>
-                    (Estimate arrived in {props.val?.shipping_duration})
+                    (Estimate arrived in {props.val?.shipping_duration} days)
                   </Text>
                 </Flex>
               </Flex>
@@ -273,6 +276,48 @@ export default function OrderDetailsModal(props) {
                     {props.val?.address.postcode}
                   </Text>
                 </Flex>
+              </Flex>
+            </Flex>
+          </Flex>
+          <Flex w={"100%"} flexDir={"column"} mt={"10px"}>
+            <Text fontWeight={"bold"}>Payment Details</Text>
+            <Flex flexDir={"column"} w={"100%"} gap={2}>
+              <Flex mt={"10px"} justify={"space-between"}>
+                <Text fontSize={"sm"} color={"gray.500"}>
+                  Payment Methode
+                </Text>
+                <Flex flexDir={"column"} pl={"10px"}>
+                  <Text fontSize={"sm"}>Bank Transfer</Text>
+                  <Text fontSize={"sm"}>
+                    Mandiri :{" "}
+                    <span style={{ fontWeight: "bold" }}>0854 1123 2212</span>
+                  </Text>
+                </Flex>
+              </Flex>
+              <Flex justify={"space-between"}>
+                <Text fontSize={"sm"} color={"gray.500"}>
+                  Total Price
+                </Text>
+                <Text fontSize={"sm"}>
+                  Rp.{" "}
+                  {(
+                    props.val?.total_price - props.val?.shipping_cost
+                  ).toLocaleString("id-ID")}{" "}
+                </Text>
+              </Flex>
+              <Flex justify={"space-between"}>
+                <Text fontSize={"sm"} color={"gray.500"}>
+                  Shipping cost
+                </Text>
+                <Text fontSize={"sm"}>
+                  Rp. {props.val?.shipping_cost.toLocaleString("id-ID")}{" "}
+                </Text>
+              </Flex>
+              <Flex justify={"space-between"}>
+                <Text fontWeight={"bold"}>Total Order</Text>
+                <Text fontWeight={"bold"}>
+                  Rp. {props.val?.total_price.toLocaleString("id-ID")}{" "}
+                </Text>
               </Flex>
             </Flex>
           </Flex>

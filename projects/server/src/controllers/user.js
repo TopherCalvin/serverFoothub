@@ -13,6 +13,8 @@ const {
   editPassword,
   mailerEmail,
 } = require("../service/user.service");
+const { Op } = require("sequelize");
+const path = require("path");
 
 const userController = {
   register: async (req, res) => {
@@ -22,10 +24,14 @@ const userController = {
       const findEmail = await findUser(email);
 
       if (findEmail) {
+        await t.rollback();
         return res.status(400).send({ message: "email was registered" });
       }
 
-      const user = await db.User.create({ email, role: "USER" });
+      const user = await db.User.create(
+        { email, role: "USER" },
+        { transaction: t }
+      );
       const id = JSON.stringify({ id: user.dataValues.id });
       const generateToken = nanoid();
       await createToken(id, generateToken, 1, "VERIFY", t);
@@ -49,6 +55,7 @@ const userController = {
         { valid: 0 },
         { where: { userId: id }, transaction: t }
       );
+
       t.commit();
       return res.status(201).send({ message: "Success create account" });
     } catch (err) {
@@ -61,6 +68,7 @@ const userController = {
     try {
       let user = await findUser(req.body?.email);
       if (!user && !req.query?.providerId) {
+        await t.rollback();
         return res.status(400).send({ message: "email not found" });
       }
       const salt = req.query?.email
@@ -74,8 +82,10 @@ const userController = {
             name: req.query?.displayName,
             password: hashPassword,
             phone: req.query?.phoneNumber,
+            avatar_url: req.query?.photoURL,
             status: "verified",
             role: "USER",
+            providerId: req.query?.providerData[0].providerId,
           },
           { transaction: t }
         );
@@ -85,8 +95,10 @@ const userController = {
         user.dataValues.password
       );
       if (!match && req.body?.password == "AB!@12ab") {
+        await t.rollback();
         return res.status(400).send({ message: "email already exist" });
       } else if (!match) {
+        await t.rollback();
         return res.status(400).send({ message: "wrong password" });
       }
       const id = JSON.stringify({ id: user.dataValues.id });
@@ -150,6 +162,7 @@ const userController = {
         await t.commit();
         return res.status(200).send({ message: "check your email" });
       } else {
+        await t.rollback();
         return res.status(400).send({ message: "Email not found" });
       }
     } catch (err) {
@@ -161,9 +174,8 @@ const userController = {
     const t = await db.sequelize.transaction();
     try {
       let token = req.headers.authorization.split(" ")[1];
-      const { id } = req.user;
-
-      await updateUser(req.body, id, t); //req.body: pass
+      const { email } = req.user;
+      await editPassword({ newPassword: req.body.password, email }, t);
       await db.Token.update({ valid: 0 }, { where: { token }, transaction: t });
       await t.commit();
       return res.status(200).send({ message: "success change passowrd" });
@@ -183,9 +195,10 @@ const userController = {
         if (check?.dataValues?.avatar_url) {
           try {
             fs.unlinkSync(
-              `${__dirname}/../public/avatar/${
-                check.dataValues.avatar_url.split("/")[1]
-              }`
+              path.join(
+                __dirname,
+                `../public/avatar/${check.dataValues.avatar_url.split("/")[1]}`
+              )
             );
           } catch (err) {
             console.log(err);
@@ -199,7 +212,11 @@ const userController = {
         .send({ message: "Your changes has successfully saved" });
     } catch (err) {
       if (filename) {
-        fs.unlinkSync(`${__dirname}/../public/avatar/${filename}`);
+        try {
+          fs.unlinkSync(path.join(__dirname, `../public/avatar/${filename}`));
+        } catch (err) {
+          console.log(err);
+        }
       }
       await t.rollback();
       return res.status(500).send({ message: err.message });
@@ -214,9 +231,10 @@ const userController = {
         check.dataValues.password
       );
       if (!match) {
+        await t.rollback();
         return res.status(400).send({ message: "Password not match" });
       }
-      await editPassword(req.body, check, t);
+      await editPassword(req.body, t);
       await t.commit();
       return res.status(200).send({ message: "success change password" });
     } catch (err) {
@@ -229,22 +247,30 @@ const userController = {
     const t = await db.sequelize.transaction();
     const { filename } = req?.file;
     try {
-      const { email } = req.body;
-      const check = await findUser(email);
+      const check = await findUser(req?.body?.email);
 
       if (check) {
         if (filename) {
-          fs.unlinkSync(`${__dirname}/../public/avatar/${filename}`);
+          try {
+            fs.unlinkSync(path.join(__dirname, `../public/avatar/${filename}`));
+          } catch (err) {
+            console.log(err);
+          }
         }
-        return res.status(400).send({ message: "email alrdy exist" });
+        await t.rollback();
+        return res.status(400).send({ message: "email already exist" });
       }
 
-      await addAdmin(req.body, req.file, t);
+      await addAdmin(req.body, filename, t);
       await t.commit();
       return res.status(200).send({ message: "success add admin" });
     } catch (err) {
       if (filename) {
-        fs.unlinkSync(`${__dirname}/../public/avatar/${filename}`);
+        try {
+          fs.unlinkSync(path.join(__dirname, `../public/avatar/${filename}`));
+        } catch (err) {
+          console.log(err);
+        }
       }
       await t.rollback();
       return res.status(500).send({ message: err.message });
@@ -252,34 +278,73 @@ const userController = {
   },
   getAllUser: async (req, res) => {
     try {
-      const result = await db.User.findAll();
-      return res.status(200).send(result);
+      const search = req?.query?.search || "";
+      const sort = req?.query?.sort || "name";
+      const order = req?.query?.order || "ASC";
+      const role = req?.query?.role || "";
+      const limit = req?.query?.limit || 8;
+      const page = req?.query?.page || 1;
+      const offset = (parseInt(page) - 1) * limit;
+      const whereClause = { [Op.and]: [] };
+
+      if (role) {
+        whereClause[Op.and].push({
+          role: { [Op.like]: `${role}%` },
+        });
+      } else if (search) {
+        whereClause[Op.and].push({
+          [Op.or]: [
+            { name: { [Op.like]: `%${search}%` } },
+            { role: { [Op.like]: `${search}%` } },
+            { email: { [Op.like]: `%${search}%` } },
+            { phone: { [Op.like]: `%${search}%` } },
+          ],
+        });
+      }
+
+      const result = await db.User.findAndCountAll({
+        where: whereClause,
+        limit,
+        offset,
+        distinct: true,
+        order: [[sort, order]],
+      });
+      return res
+        .status(200)
+        .send({ ...result, totalPages: Math.ceil(result.count / limit) });
     } catch (err) {
-      res.status(500).send({ message: err.message });
+      return res.status(500).send({ message: err.message });
     }
   },
   getAdminById: async (req, res) => {
-    const user = await db.User.findOne({
-      where: { id: req.params.id },
-    });
-    return res.status(200).send(user);
+    try {
+      const user = await db.User.findOne({
+        where: { id: req.params.id },
+      });
+      return res.status(200).send(user);
+    } catch (err) {
+      return res.status(500).send({ message: err.message });
+    }
   },
   deleteAdmin: async (req, res) => {
     const t = await db.sequelize.transaction();
     try {
       const id = req.params.id;
-      await db.Admin.destroy({ where: { user_id: id } }, { transaction: t });
-
       const check = await findUser(id);
+      await db.Admin.destroy({ where: { user_id: id }, transaction: t });
+      await db.User.destroy({ where: { id }, transaction: t });
       if (check?.dataValues?.avatar_url) {
-        fs.unlinkSync(
-          `${__dirname}/../public/avatar/${
-            check.dataValues.avatar_url.split("/")[1]
-          }`
-        );
+        try {
+          fs.unlinkSync(
+            path.join(
+              __dirname,
+              `../public/avatar/${check.dataValues.avatar_url.split("/")[1]}`
+            )
+          );
+        } catch (err) {
+          console.log(err);
+        }
       }
-
-      await db.User.destroy({ where: { id } }, { transaction: t });
       await t.commit();
       return res.status(200).send({ message: "success delete admin" });
     } catch (err) {

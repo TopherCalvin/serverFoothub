@@ -1,14 +1,13 @@
-import { Box, Button, Flex, InputRightAddon } from "@chakra-ui/react";
+import { Box, Button, Flex } from "@chakra-ui/react";
 import { FormControl, FormErrorMessage } from "@chakra-ui/react";
 import { Heading, Icon, Input, InputGroup } from "@chakra-ui/react";
 import { InputRightElement, Stack, Text, useToast } from "@chakra-ui/react";
 import { TbAlertCircleFilled } from "react-icons/tb";
-import { FaSearch } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { ViewOffIcon, ViewIcon, EmailIcon } from "@chakra-ui/icons";
 import { Link, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import React, { useState, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import React, { useState, useRef, useEffect } from "react";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import { api } from "../../api/api";
@@ -18,7 +17,7 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 export default function Login() {
   YupPassword(Yup);
-  const inputFileRef = useRef(null);
+  const userSelector = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const toast = useToast({ duration: 3000, isClosable: true, position: "top" });
   const nav = useNavigate();
@@ -27,17 +26,22 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [formField, setFormField] = useState("");
 
+  useEffect(() => {
+    if (userSelector.email) {
+      return nav("/");
+    }
+  }, [userSelector]);
+
   async function googleLogin() {
     try {
       const provider = new GoogleAuthProvider();
       const body = await signInWithPopup(auth, provider);
-      console.log(body.user);
+      console.log(body.user.photoURL);
       const res = await api().post(
         "/auth/login",
         { email: body.user.email, password: "AB!@12ab" },
         { params: body.user }
       );
-      console.log(res.data);
       localStorage.setItem("user", JSON.stringify(res.data.token));
       const restoken = await api().get("/auth/userbytoken", {
         headers: {
@@ -54,7 +58,6 @@ export default function Login() {
       });
       return nav("/");
     } catch (error) {
-      console.log(error);
       toast({
         title: error.response.data.message,
         status: "error",
@@ -77,6 +80,7 @@ export default function Login() {
     }),
     onSubmit: async () => {
       let token;
+      setIsLoading(true);
       try {
         const res = await api().post("/auth/login", formik.values);
         localStorage.setItem("user", JSON.stringify(res.data.token));
@@ -90,17 +94,18 @@ export default function Login() {
           type: "login",
           payload: restoken.data,
         });
-        // fetch(dispatch);
         toast({
           title: res.data.message,
           status: "success",
         });
+        setIsLoading(false);
         return nav("/");
       } catch (err) {
         toast({
           title: err?.response?.data.message,
           status: "error",
         });
+        setIsLoading(false);
       }
     },
   });
@@ -186,13 +191,7 @@ export default function Login() {
             formik.values.email && formik.values.password ? false : true
           }
           isLoading={isLoading}
-          onClick={() => {
-            setIsLoading(true);
-            setTimeout(() => {
-              setIsLoading(false);
-              formik.handleSubmit();
-            }, 2000);
-          }}
+          onClick={formik.handleSubmit}
         >
           login
         </Button>

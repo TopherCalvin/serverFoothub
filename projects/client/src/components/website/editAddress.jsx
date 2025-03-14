@@ -24,7 +24,7 @@ export default function EditAddress({ data, fetch, isOpen, onClose }) {
       title: Yup.string().required("Required"),
       name: Yup.string().required("Required"),
       phone: Yup.string()
-        .min(12, "min 12 digits")
+        .min(10, "min 10 digits")
         .max(12, "max 12 digits")
         .required("Required"),
       city_id: Yup.number().required("Required"),
@@ -32,12 +32,14 @@ export default function EditAddress({ data, fetch, isOpen, onClose }) {
       address_details: Yup.string().max(100).required("Required"),
     }),
     onSubmit: async () => {
+      setIsLoading(true);
       try {
         const res = await api().patch("/address/edit", formik.values);
         toast({
           title: res.data.message,
           status: "success",
         });
+        setIsLoading(false);
         fetch();
         onClose();
       } catch (err) {
@@ -45,11 +47,10 @@ export default function EditAddress({ data, fetch, isOpen, onClose }) {
           title: err?.response?.data?.message,
           status: "error",
         });
+        setIsLoading(false);
       }
     },
   });
-
-  const editAddress = async () => {};
 
   useEffect(() => {
     if (data) {
@@ -76,9 +77,14 @@ export default function EditAddress({ data, fetch, isOpen, onClose }) {
     { id: "address_details", type: "text" },
   ];
   return (
-    <Modal closeOnOverlayClick={false} isOpen={isOpen} onClose={onClose}>
+    <Modal
+      scrollBehavior="inside"
+      closeOnOverlayClick={false}
+      isOpen={isOpen}
+      onClose={onClose}
+    >
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent mx={2}>
         <ModalHeader>EDIT ADDRESS</ModalHeader>
         <ModalCloseButton />
         <ModalBody display={"flex"} flexDir={"column"} gap={5}>
@@ -183,14 +189,7 @@ export default function EditAddress({ data, fetch, isOpen, onClose }) {
             id="button"
             variant={"outline"}
             isLoading={isLoading}
-            onClick={() => {
-              setIsLoading(true);
-              setTimeout(() => {
-                setIsLoading(false);
-                formik.handleSubmit();
-                // editAddress();
-              }, 2000);
-            }}
+            onClick={formik.handleSubmit}
           >
             Save
           </Button>

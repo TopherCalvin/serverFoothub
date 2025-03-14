@@ -20,7 +20,7 @@ export default function WarehouseSelect(props) {
   }, []);
   async function warehouseAdmin(token) {
     const warehouse = await api().get("/warehouses/fetchDefault");
-    props.setWareAdmin && props.setWareAdmin(warehouse?.data?.warehouse);
+    props.setWareAdmin && props.setWareAdmin(warehouse?.data[0]);
     props.setFilter({
       ...props.filter,
       warehouse_id: warehouse?.data[0]?.id,
@@ -40,8 +40,8 @@ export default function WarehouseSelect(props) {
             <option key={""} value={""}>
               choose province..
             </option>
-            {provinces &&
-              provinces.map((val, idx) => (
+            {provinces?.length &&
+              provinces?.map((val, idx) => (
                 <option value={val?.city?.province}>
                   {val?.city?.province}
                 </option>
@@ -62,10 +62,10 @@ export default function WarehouseSelect(props) {
             <option key={""} value={""}>
               choose city..
             </option>
-            {cities &&
-              cities.map((val, idx) => (
-                <option key={val.id} value={val.id}>
-                  {`Warehouse ${val.name} (${val.city.type} ${val.city.city_name})`}
+            {cities?.length &&
+              cities?.map((val, idx) => (
+                <option key={val?.id} value={val?.id}>
+                  {`Warehouse ${val?.name} (${val?.city?.type} ${val?.city?.city_name})`}
                 </option>
               ))}
           </Select>

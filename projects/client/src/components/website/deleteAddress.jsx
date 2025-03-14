@@ -11,7 +11,7 @@ import {
 } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import { api } from "../../api/api";
-
+// ------------------------------------------------------ CLEAR -FAHMI
 export default function DeleteAddress(props) {
   const [isLoading, setIsLoading] = useState(false);
   const cancelRef = React.useRef();
@@ -23,12 +23,14 @@ export default function DeleteAddress(props) {
   }, [props.address]);
 
   const deleteAddress = async () => {
+    setIsLoading(true);
     try {
       const res = await api().delete("/address", { params: { ...address } });
       toast({
         title: res.data.message,
         status: "success",
       });
+      setIsLoading(false);
       props.fetch();
       props.onClose();
     } catch (err) {
@@ -36,6 +38,7 @@ export default function DeleteAddress(props) {
         title: err?.response?.data,
         status: "success",
       });
+      setIsLoading(false);
     }
   };
 
@@ -49,7 +52,7 @@ export default function DeleteAddress(props) {
         isCentered
       >
         <AlertDialogOverlay />
-        <AlertDialogContent>
+        <AlertDialogContent mx={2}>
           <AlertDialogHeader>
             <AlertDialogCloseButton />
           </AlertDialogHeader>
@@ -57,17 +60,7 @@ export default function DeleteAddress(props) {
             Are you sure you want to delete address {props?.address?.title} ?
           </AlertDialogBody>
           <AlertDialogFooter>
-            <Button
-              id="button"
-              isLoading={isLoading}
-              onClick={() => {
-                setIsLoading(true);
-                setTimeout(() => {
-                  setIsLoading(false);
-                  deleteAddress();
-                }, 2000);
-              }}
-            >
+            <Button id="button" isLoading={isLoading} onClick={deleteAddress}>
               Yes
             </Button>
           </AlertDialogFooter>
